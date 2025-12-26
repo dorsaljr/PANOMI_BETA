@@ -16,6 +16,7 @@ public partial class App : Application
     private Window? _window;
     private static IServiceProvider? _serviceProvider;
     private static Mutex? _mutex;
+    private static EventWaitHandle? _showWindowEvent;
 
     public static IServiceProvider Services => _serviceProvider ?? throw new InvalidOperationException("Services not initialized");
 
@@ -26,9 +27,34 @@ public partial class App : Application
         
         if (!isNewInstance)
         {
+            // Signal existing instance to show its window
+            try
+            {
+                var existingEvent = EventWaitHandle.OpenExisting("PanomiShowWindowEvent");
+                existingEvent.Set();
+            }
+            catch { }
+            
             Environment.Exit(0);
             return;
         }
+        
+        // Create event for other instances to signal us
+        _showWindowEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "PanomiShowWindowEvent");
+        
+        // Listen for show window signals in background
+        Task.Run(() =>
+        {
+            while (true)
+            {
+                _showWindowEvent.WaitOne();
+                // Show window on UI thread
+                MainWindow?.DispatcherQueue?.TryEnqueue(() =>
+                {
+                    MainWindow?.ShowFromTray();
+                });
+            }
+        });
         
         // Initialize Velopack first (required for updates to work)
         UpdateService.Initialize();

@@ -529,7 +529,7 @@ public sealed partial class MainWindow : Window
         public void Execute(object? parameter) => _execute();
     }
     
-    private void ShowFromTray()
+    public void ShowFromTray()
     {
         // Show and activate window
         _appWindow?.Show();
