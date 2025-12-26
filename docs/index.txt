@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panomi - Unified Game Launcher</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f, #12121a);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #00d4ff, #00a8cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tagline { font-size: 1.25rem; color: #8888aa; margin-bottom: 40px; }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #00d4ff, #00a8cc);
+            color: #000;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 16px 48px;
+            border-radius: 30px;
+            text-decoration: none;
+        }
+        .download-btn:hover { box-shadow: 0 8px 30px rgba(0,212,255,0.3); }
+        .version { margin-top: 16px; font-size: 0.85rem; color: #666688; }
+        .footer { margin-top: 60px; font-size: 0.8rem; color: #444466; }
+        .footer a { color: #00d4ff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Panomi</h1>
+        <p class="tagline">All your game launchers, one place.</p>
+        <a href="https://github.com/dorsaljr/PANOMI_BETA/releases/latest/download/Panomi-win-Setup.exe" class="download-btn">
+            Download for Windows
+        </a>
+        <p class="version">v1.0.2 Beta • Windows 10/11</p>
+        <p class="footer"><a href="https://github.com/dorsaljr/PANOMI_BETA">View on GitHub</a></p>
+    </div>
+</body>
+</html>
