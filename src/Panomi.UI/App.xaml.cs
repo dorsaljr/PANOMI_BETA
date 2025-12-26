@@ -21,6 +21,15 @@ public partial class App : Application
 
     public App()
     {
+        // Single instance check - must be FIRST
+        _mutex = new Mutex(true, "PanomiSingleInstanceMutex", out bool isNewInstance);
+        
+        if (!isNewInstance)
+        {
+            Environment.Exit(0);
+            return;
+        }
+        
         // Initialize Velopack first (required for updates to work)
         UpdateService.Initialize();
         
@@ -95,17 +104,6 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        // Single instance check
-        _mutex = new Mutex(true, "PanomiSingleInstanceMutex", out bool isNewInstance);
-        
-        if (!isNewInstance)
-        {
-            // Another instance is running - try to show it and exit
-            BringExistingInstanceToFront();
-            Environment.Exit(0);
-            return;
-        }
-        
         var mainWindow = new MainWindow();
         _window = mainWindow;
         MainWindow = mainWindow;
@@ -114,26 +112,6 @@ public partial class App : Application
         // Check for updates silently in background
         _ = UpdateService.CheckForUpdatesAsync();
     }
-    
-    private static void BringExistingInstanceToFront()
-    {
-        // Find and activate existing Panomi window
-        var hwnd = FindWindow(null, "");
-        if (hwnd != IntPtr.Zero)
-        {
-            ShowWindow(hwnd, 9); // SW_RESTORE
-            SetForegroundWindow(hwnd);
-        }
-    }
-    
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern IntPtr FindWindow(string? lpClassName, string lpWindowName);
-    
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-    
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     public static T GetService<T>() where T : class
     {
