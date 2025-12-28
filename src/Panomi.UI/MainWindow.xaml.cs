@@ -491,6 +491,16 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
     }
     
+    private void QuickLaunchToggle_GotFocus(object sender, RoutedEventArgs e)
+    {
+        QuickLaunchTooltip.IsOpen = true;
+    }
+    
+    private void QuickLaunchToggle_LostFocus(object sender, RoutedEventArgs e)
+    {
+        QuickLaunchTooltip.IsOpen = false;
+    }
+    
     private void MinimizeToTrayToggle_Changed(object sender, RoutedEventArgs e)
     {
         if (_isLoadingSettings) return;

@@ -263,8 +263,8 @@
                                               Background="Transparent" PointerPressed="MinimizeToTrayRow_PointerPressed"
                                               ToolTipService.Placement="Left">
                                             <ToolTipService.ToolTip>
-                                                <ToolTip x:Name="QuickLaunchTooltip">
-                                                    <TextBlock x:Name="QuickLaunchInfoText" Foreground="#888" FontSize="12" MaxWidth="250" TextWrapping="Wrap"/>
+                                                <ToolTip x:Name="QuickLaunchTooltip" Background="#0f1114" BorderBrush="#2a2a2f" BorderThickness="1" CornerRadius="8" Padding="12,8">
+                                                    <TextBlock x:Name="QuickLaunchInfoText" Foreground="White" FontSize="12" MaxWidth="250" TextWrapping="Wrap"/>
                                                 </ToolTip>
                                             </ToolTipService.ToolTip>
                                             <Grid.ColumnDefinitions>
@@ -275,6 +275,7 @@
                                             <CheckBox x:Name="MinimizeToTrayToggle" Grid.Column="1" 
                                                       Checked="MinimizeToTrayToggle_Changed" Unchecked="MinimizeToTrayToggle_Changed"
                                                       KeyDown="SettingsCheckbox_KeyDown"
+                                                      GotFocus="QuickLaunchToggle_GotFocus" LostFocus="QuickLaunchToggle_LostFocus"
                                                       MinWidth="0" Padding="0"/>
                                         </Grid>
                                         

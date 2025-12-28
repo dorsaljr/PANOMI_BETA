@@ -13,7 +13,7 @@ public static class Loc
     {
         ["en-US"] = new()
         {
-            ["ScanButton"] = "Scan launchers & games",
+            ["ScanButton"] = "Scan Launchers & Games",
             ["LaunchButton"] = "Launch",
             ["LaunchingButton"] = "Launching...",
             ["Library"] = "Library",
@@ -37,7 +37,7 @@ public static class Loc
         },
         ["es"] = new()
         {
-            ["ScanButton"] = "Buscar launchers y juegos",
+            ["ScanButton"] = "Buscar Launchers y Juegos",
             ["LaunchButton"] = "Iniciar",
             ["LaunchingButton"] = "Iniciando...",
             ["Library"] = "Biblioteca",
@@ -60,7 +60,7 @@ public static class Loc
         },
         ["pt-BR"] = new()
         {
-            ["ScanButton"] = "Buscar launchers e jogos",
+            ["ScanButton"] = "Buscar Launchers e Jogos",
             ["LaunchButton"] = "Iniciar",
             ["LaunchingButton"] = "Iniciando...",
             ["Library"] = "Biblioteca",
@@ -83,7 +83,7 @@ public static class Loc
         },
         ["fr"] = new()
         {
-            ["ScanButton"] = "Rechercher launchers et jeux",
+            ["ScanButton"] = "Rechercher Launchers et Jeux",
             ["LaunchButton"] = "Lancer",
             ["LaunchingButton"] = "Lancement...",
             ["Library"] = "Bibliothèque",
@@ -106,7 +106,7 @@ public static class Loc
         },
         ["de"] = new()
         {
-            ["ScanButton"] = "Launcher und Spiele suchen",
+            ["ScanButton"] = "Launcher und Spiele Suchen",
             ["LaunchButton"] = "Starten",
             ["LaunchingButton"] = "Starten...",
             ["Library"] = "Bibliothek",
@@ -129,7 +129,7 @@ public static class Loc
         },
         ["it"] = new()
         {
-            ["ScanButton"] = "Cerca launcher e giochi",
+            ["ScanButton"] = "Cerca Launcher e Giochi",
             ["LaunchButton"] = "Avvia",
             ["LaunchingButton"] = "Avvio...",
             ["Library"] = "Libreria",
