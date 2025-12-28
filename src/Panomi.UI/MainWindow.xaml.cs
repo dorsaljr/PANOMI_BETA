@@ -46,7 +46,7 @@ public sealed partial class MainWindow : Window
     // Track button currently showing "Launching..." for language updates
     private LibraryItem? _launchingButton = null;
     
-    // Tray icon for minimize to tray feature
+    // Tray icon settings
     private TaskbarIcon? _trayIcon;
     private bool _minimizeToTray = true;  // Default ON for better first impression
     private bool _isReallyClosing = false;
@@ -516,7 +516,7 @@ public sealed partial class MainWindow : Window
         
         _minimizeToTray = MinimizeToTrayToggle.IsChecked == true;
         
-        // Create or dispose tray icon based on setting
+        // Show or hide tray icon based on setting
         if (_minimizeToTray)
         {
             if (_trayIcon == null)
@@ -535,13 +535,16 @@ public sealed partial class MainWindow : Window
     
     private void InitializeTrayIcon()
     {
-        var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "logo_ico.ico");
-        
+        // Use ms-appx URI which works better for packaged apps
         _trayIcon = new TaskbarIcon
         {
-            Icon = new System.Drawing.Icon(iconPath),
-            ToolTipText = "Panomi"
+            IconSource = new BitmapImage(new Uri("ms-appx:///Assets/logo_ico.ico")),
+            ToolTipText = "Panomi",
+            NoLeftClickDelay = true
         };
+        
+        // Set up left click to show window
+        _trayIcon.LeftClickCommand = new RelayCommand(ShowFromTray);
         
         // Create context menu
         var contextMenu = new MenuFlyout();
@@ -556,9 +559,12 @@ public sealed partial class MainWindow : Window
         
         _trayIcon.ContextFlyout = contextMenu;
         
-        // Double-click to show
-        _trayIcon.LeftClickCommand = new RelayCommand(ShowFromTray);
+        // Force the icon to appear in system tray immediately
+        _trayIcon.ForceCreate();
     }
+    
+    private void TrayShow_Click(object sender, RoutedEventArgs e) => ShowFromTray();
+    private void TrayExit_Click(object sender, RoutedEventArgs e) => ExitApplication();
     
     private class RelayCommand : System.Windows.Input.ICommand
     {
