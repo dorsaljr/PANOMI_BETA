@@ -38,11 +38,21 @@ public class UbisoftConnectDetector : BaseLauncherDetector
         result.IsInstalled = true;
         result.InstallPath = ubisoftPath;
 
-        // Primary: Read games from registry
+        // Primary: Read games from registry (for games with InstallDir)
         var registryGames = GetGamesFromRegistry();
         foreach (var game in registryGames)
         {
             if (!result.Games.Any(g => g.Name == game.Name))
+                result.Games.Add(game);
+        }
+
+        // Secondary: Scan native games folder from settings.yaml
+        var nativeGames = GetNativeGamesFromFolder();
+        foreach (var game in nativeGames)
+        {
+            // Skip if already added from registry
+            if (!result.Games.Any(g => g.Name.Equals(game.Name, StringComparison.OrdinalIgnoreCase) || 
+                                       g.InstallPath?.Equals(game.InstallPath, StringComparison.OrdinalIgnoreCase) == true))
                 result.Games.Add(game);
         }
 
@@ -54,62 +64,222 @@ public class UbisoftConnectDetector : BaseLauncherDetector
         var games = new List<DetectedGame>();
         
         // Games are registered under HKLM\SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\{GameId}
-        var registryPaths = new[]
+        // Use lowercase 'ubisoft' and 32-bit registry view (matching Playnite's proven approach)
+        var registryConfigs = new[]
         {
-            @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs",
-            @"SOFTWARE\Ubisoft\Launcher\Installs"
+            (Path: @"SOFTWARE\ubisoft\Launcher\Installs", Use32Bit: true),  // 32-bit view (where Ubisoft stores data)
+            (Path: @"SOFTWARE\ubisoft\Launcher\Installs", Use32Bit: false), // 64-bit view fallback
         };
 
-        // Check HKLM paths
-        foreach (var regPath in registryPaths)
+        // Check HKLM paths with different registry views
+        foreach (var config in registryConfigs)
         {
             try
             {
-                var gameIds = GetRegistrySubKeyNames(regPath);
+                var gameIds = GetRegistrySubKeyNames(config.Path, use32BitView: config.Use32Bit);
                 foreach (var gameId in gameIds)
                 {
-                    var game = ParseGameFromRegistry(regPath, gameId);
+                    var game = ParseGameFromRegistry(config.Path, gameId, config.Use32Bit);
                     if (game != null && !games.Any(g => g.ExternalId == game.ExternalId))
+                    {
                         games.Add(game);
+                    }
                 }
             }
             catch
             {
-                // Continue if registry access fails
+                // Continue to next registry config
             }
         }
         
         // Check HKCU paths
-        foreach (var regPath in registryPaths)
+        var hkcuPath = @"SOFTWARE\ubisoft\Launcher\Installs";
+        try
         {
-            try
+            var gameIds = GetUserRegistrySubKeyNames(hkcuPath);
+            foreach (var gameId in gameIds)
             {
-                var gameIds = GetUserRegistrySubKeyNames(regPath);
-                foreach (var gameId in gameIds)
-                {
-                    var game = ParseGameFromUserRegistry(regPath, gameId);
-                    if (game != null && !games.Any(g => g.ExternalId == game.ExternalId))
-                        games.Add(game);
-                }
+                var game = ParseGameFromUserRegistry(hkcuPath, gameId);
+                if (game != null && !games.Any(g => g.ExternalId == game.ExternalId))
+                    games.Add(game);
             }
-            catch
-            {
-                // Continue if registry access fails
-            }
+        }
+        catch
+        {
+            // Continue if registry access fails
         }
 
         return games;
     }
 
-    private DetectedGame? ParseGameFromRegistry(string basePath, string gameId)
+    private List<DetectedGame> GetNativeGamesFromFolder()
+    {
+        var games = new List<DetectedGame>();
+        
+        // Get the games folder from settings.yaml
+        var gamesFolder = GetGamesInstallFolder();
+        if (string.IsNullOrEmpty(gamesFolder) || !Directory.Exists(gamesFolder))
+            return games;
+
+        try
+        {
+            // Scan each subdirectory as a potential game
+            var gameDirs = Directory.GetDirectories(gamesFolder);
+            foreach (var gameDir in gameDirs)
+            {
+                var game = ParseGameFromFolder(gameDir);
+                if (game != null)
+                    games.Add(game);
+            }
+        }
+        catch
+        {
+            // Ignore folder scanning errors
+        }
+
+        return games;
+    }
+
+    private string? GetGamesInstallFolder()
+    {
+        // Read from settings.yaml in LocalAppData
+        try
+        {
+            var settingsPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Ubisoft Game Launcher",
+                "settings.yaml");
+
+            if (!File.Exists(settingsPath))
+                return null;
+
+            var content = File.ReadAllText(settingsPath);
+            
+            // Parse game_installation_path from YAML (simple parsing)
+            var match = System.Text.RegularExpressions.Regex.Match(
+                content, 
+                @"game_installation_path:\s*(.+?)(?:\r?\n|$)");
+            
+            if (match.Success)
+            {
+                var path = match.Groups[1].Value.Trim();
+                // Convert forward slashes to backslashes
+                path = path.Replace("/", "\\");
+                if (Directory.Exists(path))
+                    return path;
+            }
+        }
+        catch
+        {
+            // Ignore parsing errors
+        }
+
+        // Fallback to default location
+        var defaultPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+            "Ubisoft", "Ubisoft Game Launcher", "games");
+        
+        if (Directory.Exists(defaultPath))
+            return defaultPath;
+
+        return null;
+    }
+
+    private DetectedGame? ParseGameFromFolder(string gameDir)
+    {
+        try
+        {
+            var folderName = Path.GetFileName(gameDir);
+            if (string.IsNullOrEmpty(folderName))
+                return null;
+
+            // Skip if it's not a valid game folder
+            if (!IsValidGameInstall(gameDir))
+                return null;
+
+            // Find executable
+            var exePath = FindMainExecutable(gameDir);
+            if (string.IsNullOrEmpty(exePath))
+                return null;
+
+            // Get game name from folder name
+            var gameName = folderName;
+
+            // Skip DLC and extras
+            if (IsSkippable(gameName, ""))
+                return null;
+
+            // Try to find game ID from known games or folder name mapping
+            var gameId = GetGameIdFromFolderName(folderName);
+
+            // Launch command uses uplay:// protocol if we have an ID, otherwise use exe
+            var launchCommand = !string.IsNullOrEmpty(gameId) 
+                ? $"uplay://launch/{gameId}/0" 
+                : exePath;
+
+            return new DetectedGame
+            {
+                Name = CleanGameTitle(gameName),
+                ExternalId = gameId ?? folderName,
+                InstallPath = gameDir,
+                ExecutablePath = exePath,
+                LaunchCommand = launchCommand
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private string? GetGameIdFromFolderName(string folderName)
+    {
+        // Map known folder names to game IDs (from Ubisoft Connect registry)
+        var folderToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Brawlhalla", "16382" },
+            { "Roller Champions", "11899" },
+            { "XDefiant", "925" },
+            { "Tom Clancy's Rainbow Six Siege", "635" },
+            { "Rainbow Six Siege", "635" },
+            { "Far Cry 5", "720" },
+            { "Far Cry 6", "4923" },
+            { "Far Cry 4", "410" },
+            { "Far Cry Primal", "568" },
+            { "Assassin's Creed Valhalla", "1842" },
+            { "Assassin's Creed Mirage", "5855" },
+            { "Assassin's Creed Odyssey", "3539" },
+            { "Watch Dogs Legion", "5266" },
+            { "The Division 2", "2738" },
+            { "The Crew 2", "2739" },
+            { "Ghost Recon Breakpoint", "4312" },
+            { "Immortals Fenyx Rising", "1843" },
+            { "Riders Republic", "5436" },
+            { "Anno 1800", "3787" },
+            { "Hyper Scape", "5265" },
+        };
+
+        if (folderToId.TryGetValue(folderName, out var id))
+            return id;
+
+        return null;
+    }
+
+    private DetectedGame? ParseGameFromRegistry(string basePath, string gameId, bool use32BitView = false)
     {
         try
         {
             var fullPath = $@"{basePath}\{gameId}";
             
             // Read install directory
-            var installDir = ReadRegistryValue(fullPath, "InstallDir");
-            if (string.IsNullOrEmpty(installDir) || !Directory.Exists(installDir))
+            var installDir = ReadRegistryValue(fullPath, "InstallDir", use32BitView);
+            if (string.IsNullOrEmpty(installDir))
+                return null;
+            
+            // Normalize path (Ubisoft uses forward slashes in registry)
+            installDir = installDir.Replace("/", "\\").TrimEnd('\\');
+            
+            if (!Directory.Exists(installDir))
                 return null;
 
             // Validate it's a real game install
@@ -153,7 +323,13 @@ public class UbisoftConnectDetector : BaseLauncherDetector
             var fullPath = $@"{basePath}\{gameId}";
             
             var installDir = ReadUserRegistryValue(fullPath, "InstallDir");
-            if (string.IsNullOrEmpty(installDir) || !Directory.Exists(installDir))
+            if (string.IsNullOrEmpty(installDir))
+                return null;
+            
+            // Normalize path (Ubisoft uses forward slashes in registry)
+            installDir = installDir.Replace("/", "\\").TrimEnd('\\');
+            
+            if (!Directory.Exists(installDir))
                 return null;
 
             if (!IsValidGameInstall(installDir))

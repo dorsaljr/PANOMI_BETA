@@ -91,7 +91,8 @@
                             <TextBlock 
                                 Text="{Binding LauncherName}" 
                                 Style="{StaticResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Visibility="{Binding HasMultipleLaunchers, Converter={StaticResource BoolToVisibilityConverter}}"/>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

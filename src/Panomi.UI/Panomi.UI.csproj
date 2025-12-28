@@ -18,9 +18,9 @@
     <ApplicationIcon>Assets\logo_ico.ico</ApplicationIcon>
     
     <!-- Version info for Velopack -->
-    <Version>1.1.3</Version>
-    <AssemblyVersion>1.1.3.0</AssemblyVersion>
-    <FileVersion>1.1.3.0</FileVersion>
+    <Version>1.1.5</Version>
+    <AssemblyVersion>1.1.5.0</AssemblyVersion>
+    <FileVersion>1.1.5.0</FileVersion>
     <Product>Panomi</Product>
     <Company>Panomi</Company>
     <Description>Unified Game Launcher</Description>

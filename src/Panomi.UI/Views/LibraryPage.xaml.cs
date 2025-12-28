@@ -25,10 +25,19 @@ public sealed partial class LibraryPage : Page
     {
         Games.Clear();
         
-        var games = await _gameService.GetAllGamesAsync();
+        var games = (await _gameService.GetAllGamesAsync()).ToList();
+        
+        // Find games that exist on multiple launchers (by normalized name)
+        var duplicateNames = games
+            .GroupBy(g => g.Name.ToLowerInvariant().Trim())
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToHashSet();
+        
         foreach (var game in games)
         {
-            Games.Add(new GameViewModel(game));
+            var isDuplicate = duplicateNames.Contains(game.Name.ToLowerInvariant().Trim());
+            Games.Add(new GameViewModel(game, isDuplicate));
         }
         
         UpdateEmptyState();
@@ -52,19 +61,29 @@ public sealed partial class LibraryPage : Page
     {
         Games.Clear();
         
-        IEnumerable<Game> games;
+        IEnumerable<Game> allGames;
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            games = await _gameService.GetAllGamesAsync();
+            allGames = await _gameService.GetAllGamesAsync();
         }
         else
         {
-            games = await _gameService.SearchGamesAsync(searchText);
+            allGames = await _gameService.SearchGamesAsync(searchText);
         }
+        
+        var games = allGames.ToList();
+        
+        // Find games that exist on multiple launchers
+        var duplicateNames = games
+            .GroupBy(g => g.Name.ToLowerInvariant().Trim())
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToHashSet();
         
         foreach (var game in games)
         {
-            Games.Add(new GameViewModel(game));
+            var isDuplicate = duplicateNames.Contains(game.Name.ToLowerInvariant().Trim());
+            Games.Add(new GameViewModel(game, isDuplicate));
         }
         
         UpdateEmptyState();
@@ -104,14 +123,20 @@ public class GameViewModel
     public int Id { get; }
     public string Name { get; }
     public string LauncherName { get; }
+    public LauncherType LauncherType { get; }
     public string? IconPath { get; }
     public bool HasIcon => !string.IsNullOrEmpty(IconPath) && System.IO.File.Exists(IconPath);
+    
+    // Only true when this game exists on multiple launchers
+    public bool HasMultipleLaunchers { get; }
 
-    public GameViewModel(Game game)
+    public GameViewModel(Game game, bool hasMultipleLaunchers = false)
     {
         Id = game.Id;
         Name = game.Name;
         LauncherName = game.Launcher?.Name ?? "Unknown";
+        LauncherType = game.Launcher?.Type ?? LauncherType.Manual;
         IconPath = game.IconPath;
+        HasMultipleLaunchers = hasMultipleLaunchers;
     }
 }

@@ -81,7 +81,7 @@ public abstract class BaseLauncherDetector : ILauncherDetector
     /// <summary>
     /// Get all subkey names from a registry key
     /// </summary>
-    protected string[] GetRegistrySubKeyNames(string keyPath, bool useHKCU = false)
+    protected string[] GetRegistrySubKeyNames(string keyPath, bool useHKCU = false, bool use32BitView = false)
     {
         try
         {
@@ -92,7 +92,9 @@ public abstract class BaseLauncherDetector : ILauncherDetector
             }
             else
             {
-                key = Registry.LocalMachine.OpenSubKey(keyPath);
+                var view = use32BitView ? RegistryView.Registry32 : RegistryView.Registry64;
+                using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view);
+                key = baseKey.OpenSubKey(keyPath);
             }
 
             if (key != null)

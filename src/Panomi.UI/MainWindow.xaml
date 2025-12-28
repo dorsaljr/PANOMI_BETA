@@ -360,10 +360,14 @@
                                         <FontIcon Glyph="{Binding TitleGlyph}" FontSize="18" Foreground="White" 
                                                   Margin="0,0,6,0" VerticalAlignment="Center"
                                                   Visibility="{Binding HasTitleGlyph, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                        <TextBlock Text="{Binding Name}" Foreground="White" 
-                                                   FontSize="16" FontWeight="SemiBold"
-                                                   TextWrapping="Wrap" MaxLines="2" 
-                                                   VerticalAlignment="Center"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" Foreground="White" 
+                                                       FontSize="16" FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" MaxLines="2"/>
+                                            <TextBlock Text="{Binding LauncherName}" Foreground="#888" 
+                                                       FontSize="12"
+                                                       Visibility="{Binding HasMultipleLaunchers, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        </StackPanel>
                                     </StackPanel>
                                     
                                     <Grid VerticalAlignment="Bottom" Margin="12,0,12,12">

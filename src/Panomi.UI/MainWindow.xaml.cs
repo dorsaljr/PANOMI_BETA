@@ -539,7 +539,8 @@ public sealed partial class MainWindow : Window
         
         _trayIcon = new TaskbarIcon
         {
-            IconSource = new BitmapImage(new Uri(iconPath))
+            Icon = new System.Drawing.Icon(iconPath),
+            ToolTipText = "Panomi"
         };
         
         // Create context menu
@@ -792,6 +793,20 @@ public sealed partial class MainWindow : Window
             _allItems.Add(item);
         }
         
+        // Detect games that exist on multiple launchers
+        var gameItems = _allItems.Where(i => !i.IsLauncher).ToList();
+        var duplicateNames = gameItems
+            .GroupBy(g => g.Name.ToLowerInvariant().Trim())
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToHashSet();
+        
+        // Mark duplicates
+        foreach (var gameItem in gameItems)
+        {
+            gameItem.HasMultipleLaunchers = duplicateNames.Contains(gameItem.Name.ToLowerInvariant().Trim());
+        }
+        
         // Populate launcher filter checkboxes
         SourceFilterPanel.Children.Clear();
         
@@ -984,11 +999,17 @@ public sealed partial class MainWindow : Window
     private void UpdateStats()
     {
         var launcherCount = _allItems.Count(i => i.IsLauncher);
-        var gameCount = _allItems.Count(i => !i.IsLauncher);
         
-        TotalCount.Text = _allItems.Count.ToString();
+        // Count unique games by name (not counting duplicates across launchers)
+        var uniqueGameCount = _allItems
+            .Where(i => !i.IsLauncher)
+            .Select(i => i.Name.ToLowerInvariant().Trim())
+            .Distinct()
+            .Count();
+        
+        TotalCount.Text = (launcherCount + uniqueGameCount).ToString();
         LauncherCount.Text = launcherCount.ToString();
-        GameCount.Text = gameCount.ToString();
+        GameCount.Text = uniqueGameCount.ToString();
     }
 
     private async void ScanButton_Click(object sender, RoutedEventArgs e)
@@ -1597,6 +1618,9 @@ public class LibraryItem : System.ComponentModel.INotifyPropertyChanged
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string TypeLabel { get; set; } = string.Empty;
+    
+    // True when this game exists on multiple launchers
+    public bool HasMultipleLaunchers { get; set; }
     
     private string _launchText = "Launch";
     public string LaunchText
