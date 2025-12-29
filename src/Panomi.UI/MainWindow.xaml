@@ -47,9 +47,14 @@
                                 <TextBlock Text="Spotify" FontSize="14"/>
                             </Button>
                             <Button x:Name="DiscordButton" Click="DiscordButton_Click"
-                                    Width="44" Height="44" Padding="0" CornerRadius="10"
+                                    Height="44" Padding="10,0" CornerRadius="10"
                                     Style="{StaticResource DarkRectButtonStyle}">
-                                <Image x:Name="DiscordIcon" Width="24" Height="24"/>
+                                <Grid>
+                                    <Image x:Name="DiscordIcon" Width="24" Height="24"/>
+                                    <TextBlock x:Name="DiscordFallbackText" Text="Discord" FontSize="14" 
+                                               Foreground="White" VerticalAlignment="Center"
+                                               Visibility="Collapsed"/>
+                                </Grid>
                             </Button>
                             <Button x:Name="AILinksButton"
                                     Width="44" Height="44" Padding="0" CornerRadius="10"

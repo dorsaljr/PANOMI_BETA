@@ -618,7 +618,19 @@ public sealed partial class MainWindow : Window
             if (icon != null)
             {
                 DiscordIcon.Source = icon;
+                DiscordIcon.Visibility = Visibility.Visible;
+                DiscordFallbackText.Visibility = Visibility.Collapsed;
             }
+            else
+            {
+                DiscordIcon.Visibility = Visibility.Collapsed;
+                DiscordFallbackText.Visibility = Visibility.Visible;
+            }
+        }
+        else
+        {
+            DiscordIcon.Visibility = Visibility.Collapsed;
+            DiscordFallbackText.Visibility = Visibility.Visible;
         }
         // Always show button - will redirect to website if not installed
     }
