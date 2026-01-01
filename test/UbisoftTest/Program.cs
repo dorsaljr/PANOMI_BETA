@@ -1,4 +1,4 @@
-using Microsoft.Win32;
+d using Microsoft.Win32;
 using Panomi.Detection.Detectors;
 
 Console.WriteLine("=== Ubisoft Connect Detection Test ===\n");

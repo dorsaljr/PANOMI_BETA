@@ -210,7 +210,8 @@ public sealed partial class MainWindow : Window
                 if (settings != null)
                 {
                     _isLoadingSettings = true;
-                    FullscreenToggle.IsChecked = settings.Fullscreen;
+                    // Fullscreen is never persisted - always start windowed
+                    FullscreenToggle.IsChecked = false;
                     StartupToggle.IsChecked = settings.StartWithWindows;
                     MinimizeToTrayToggle.IsChecked = settings.MinimizeToTray;
                     _minimizeToTray = settings.MinimizeToTray;
@@ -219,11 +220,6 @@ public sealed partial class MainWindow : Window
                     Loc.SetLanguage(settings.Language ?? "en-US");
                     
                     _isLoadingSettings = false;
-                    
-                    if (settings.Fullscreen)
-                    {
-                        SetFullscreen(true);
-                    }
                 }
             }
         }
@@ -236,7 +232,7 @@ public sealed partial class MainWindow : Window
         {
             var settings = new AppSettings 
             { 
-                Fullscreen = _isFullscreen,
+                Fullscreen = false, // Never persist fullscreen
                 StartWithWindows = StartupToggle.IsChecked == true,
                 MinimizeToTray = _minimizeToTray,
                 Language = Loc.CurrentLanguage
@@ -431,13 +427,20 @@ public sealed partial class MainWindow : Window
             e.Handled = true;
         }
         
-        // Ctrl+W to close window
+        // Ctrl+W to close window (respects Quick Launch setting)
         if (e.Key == Windows.System.VirtualKey.W)
         {
             var ctrlState = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
             if (ctrlState.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
             {
-                Close();
+                if (_minimizeToTray)
+                {
+                    _appWindow?.Hide();
+                }
+                else
+                {
+                    ExitApplication();
+                }
                 e.Handled = true;
             }
         }
