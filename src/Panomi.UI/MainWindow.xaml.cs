@@ -435,6 +435,12 @@ public sealed partial class MainWindow : Window
             {
                 if (_minimizeToTray)
                 {
+                    // Exit fullscreen before hiding to tray
+                    if (_isFullscreen)
+                    {
+                        SetFullscreen(false);
+                        FullscreenToggle.IsChecked = false;
+                    }
                     _appWindow?.Hide();
                 }
                 else
@@ -609,6 +615,13 @@ public sealed partial class MainWindow : Window
         {
             // Cancel close and hide to tray instead
             args.Cancel = true;
+            
+            // Exit fullscreen before hiding
+            if (_isFullscreen)
+            {
+                SetFullscreen(false);
+                FullscreenToggle.IsChecked = false;
+            }
             _appWindow?.Hide();
         }
         else
